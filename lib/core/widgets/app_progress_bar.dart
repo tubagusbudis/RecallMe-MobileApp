@@ -37,6 +37,7 @@ class AppProgressBar extends StatelessWidget {
         const SizedBox(height: AppSpacing.p8),
         Container(
           height: 14,
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: AppColors.disabledSurface,
             borderRadius: BorderRadius.circular(AppRadii.sm),
@@ -51,6 +52,7 @@ class AppProgressBar extends StatelessWidget {
                 children: [
                   Container(
                     width: constraints.maxWidth * progress,
+                    height: double.infinity,
                     decoration: BoxDecoration(
                       color: fillColor,
                       borderRadius: BorderRadius.circular(AppRadii.sm - 2),

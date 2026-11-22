@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
@@ -14,50 +16,66 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.canvas,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.pageHorizontal,
-            vertical: AppSpacing.p16,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. Top Header Row
-              _buildHeader(),
-              const SizedBox(height: AppSpacing.p20),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final minHeight = constraints.hasBoundedHeight
+                ? math.max(0.0, constraints.maxHeight - (AppSpacing.p16 * 2))
+                : 0.0;
 
-              // 2. Hero Stacked Flashcard Illustration
-              _buildHeroStackedCard(),
-              const SizedBox(height: AppSpacing.p24),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.pageHorizontal,
+                vertical: AppSpacing.p16,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: minHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // 1. Top Header Row
+                      _buildHeader(),
+                      const SizedBox(height: AppSpacing.p20),
 
-              // 3. Headline & Description
-              _buildHeadlineAndDescription(),
-              const SizedBox(height: AppSpacing.p20),
+                      // 2. Hero Stacked Flashcard Illustration
+                      _buildHeroStackedCard(),
+                      const SizedBox(height: AppSpacing.p20),
 
-              // 4. Three Feature Mini-Cards
-              _buildFeatureCardsRow(),
-              const SizedBox(height: AppSpacing.p24),
+                      // 3. Headline & Description
+                      _buildHeadlineAndDescription(),
+                      const SizedBox(height: AppSpacing.p20),
 
-              // 5. Primary CTA Button
-              _buildCtaButton(context),
-              const SizedBox(height: AppSpacing.p20),
+                      // 4. Three Feature Mini-Cards
+                      _buildFeatureCardsRow(),
+                      const SizedBox(height: AppSpacing.p20),
 
-              // 6. Footer
-              const Text(
-                'VERSI 1.1 • RECALLME © 2026 BY TUBAGUS. ALL RIGHTS RESERVED',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: AppTextStyles.bodyFont,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.6,
-                  color: AppColors.disabledText,
-                  height: 1.4,
+                      // 5. Primary CTA Button
+                      _buildCtaButton(context),
+                      const SizedBox(height: AppSpacing.p24),
+
+                      // 6. Spacer pushing footer to bottom of viewport on taller screens
+                      const Spacer(),
+
+                      // 7. Footer
+                      const Text(
+                        'VERSI 1.1 • RECALLME © 2026 BY TUBAGUS. ALL RIGHTS RESERVED',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: AppTextStyles.bodyFont,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.6,
+                          color: AppColors.disabledText,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.p8),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.p8),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -150,7 +168,7 @@ class WelcomeScreen extends StatelessWidget {
 
   Widget _buildHeroStackedCard() {
     return SizedBox(
-      height: 215,
+      height: 250,
       child: Stack(
         alignment: Alignment.center,
         clipBehavior: Clip.none,
@@ -158,7 +176,7 @@ class WelcomeScreen extends StatelessWidget {
           // Floating ornament: Top-Left Pink Star Box
           Positioned(
             top: 2,
-            left: 6,
+            left: 2,
             child: Transform.rotate(
               angle: -0.18,
               child: Container(
@@ -177,8 +195,8 @@ class WelcomeScreen extends StatelessWidget {
 
           // Floating ornament: Top-Right Cyan Circle
           Positioned(
-            top: 10,
-            right: 8,
+            top: 8,
+            right: 2,
             child: Container(
               width: 18,
               height: 18,
@@ -196,8 +214,8 @@ class WelcomeScreen extends StatelessWidget {
 
           // Floating ornament: Bottom-Left Yellow Tilted Square
           Positioned(
-            bottom: 4,
-            left: 8,
+            bottom: 6,
+            left: 2,
             child: Transform.rotate(
               angle: 0.22,
               child: Container(
@@ -216,7 +234,7 @@ class WelcomeScreen extends StatelessWidget {
           // Floating ornament: Bottom-Right Purple Bulb Circle
           Positioned(
             bottom: 6,
-            right: 4,
+            right: 2,
             child: Container(
               width: 26,
               height: 26,
@@ -239,13 +257,14 @@ class WelcomeScreen extends StatelessWidget {
 
           // Back Layer 1: Left-tilted Teal Card slice
           Positioned(
-            left: 12,
-            right: 18,
-            bottom: 6,
+            left: 14,
+            right: 14,
+            top: 30,
             child: Transform.rotate(
-              angle: -0.04,
+              angle: -0.035,
+              alignment: Alignment.topCenter,
               child: Container(
-                height: 165,
+                height: 196,
                 decoration: AppDecorations.brutalBox(
                   backgroundColor: AppColors.teal,
                   borderRadius: AppRadii.lg,
@@ -258,13 +277,14 @@ class WelcomeScreen extends StatelessWidget {
 
           // Back Layer 2: Right-tilted Purple Card slice
           Positioned(
-            left: 18,
-            right: 12,
-            bottom: 6,
+            left: 14,
+            right: 14,
+            top: 30,
             child: Transform.rotate(
-              angle: 0.04,
+              angle: 0.035,
+              alignment: Alignment.topCenter,
               child: Container(
-                height: 165,
+                height: 196,
                 decoration: AppDecorations.brutalBox(
                   backgroundColor: AppColors.purple,
                   borderRadius: AppRadii.lg,
@@ -277,14 +297,11 @@ class WelcomeScreen extends StatelessWidget {
 
           // Main Front Card: Clean White brutalist box
           Positioned(
-            left: 12,
-            right: 12,
-            top: 14,
+            left: 14,
+            right: 14,
+            top: 24,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.p16,
-                vertical: AppSpacing.p16,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               decoration: AppDecorations.brutalBox(
                 backgroundColor: AppColors.surface,
                 borderRadius: AppRadii.lg,
@@ -308,7 +325,7 @@ class WelcomeScreen extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(AppRadii.sm),
                               border: Border.all(
                                 color: AppColors.ink,
                                 width: AppBorders.thin,
@@ -343,12 +360,12 @@ class WelcomeScreen extends StatelessWidget {
                           fit: BoxFit.scaleDown,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                              horizontal: 10,
+                              vertical: 6,
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.lime,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(AppRadii.sm),
                               border: Border.all(
                                 color: AppColors.ink,
                                 width: AppBorders.thin,
@@ -368,7 +385,7 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
                   // Subtitle & Title
                   const Text(
@@ -381,7 +398,7 @@ class WelcomeScreen extends StatelessWidget {
                       color: AppColors.mutedText,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   const Text(
                     'Active Recall & Spaced\nRepetition',
                     style: TextStyle(
@@ -392,7 +409,7 @@ class WelcomeScreen extends StatelessWidget {
                       height: 1.25,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 18),
 
                   // Progress Bar + Speed Indicator
                   Row(
@@ -447,10 +464,10 @@ class WelcomeScreen extends StatelessWidget {
       children: [
         // Verified Badge
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: AppDecorations.brutalBox(
             backgroundColor: const Color(0xFFD6C7FF),
-            borderRadius: 16,
+            borderRadius: AppRadii.sm,
             borderWidth: AppBorders.thin,
             shadows: AppDecorations.shadowSm,
           ),

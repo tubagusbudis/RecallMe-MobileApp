@@ -163,72 +163,199 @@ class _StudySessionScreenState extends ConsumerState<StudySessionScreen> {
               ),
               const SizedBox(height: AppSpacing.p16),
 
-              // Main Flashcard Study Container
+              // Main Flashcard Study Container (Responsive height)
               Expanded(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppSpacing.p20),
-                  decoration: AppDecorations.brutalBox(
-                    backgroundColor: AppColors.surface,
-                    borderWidth: AppBorders.bold,
-                    shadows: AppDecorations.shadowLg,
-                  ),
-                  child: SingleChildScrollView(
+                child: SingleChildScrollView(
+                  child: Container(
+                    width: double.infinity,
+                    constraints: const BoxConstraints(minHeight: 180),
+                    decoration: AppDecorations.brutalBox(
+                      backgroundColor: AppColors.surface,
+                      borderWidth: AppBorders.bold,
+                      shadows: AppDecorations.shadowLg,
+                    ),
+                    clipBehavior: Clip.antiAlias,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Label PERTANYAAN
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.p8,
-                            vertical: AppSpacing.p4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(AppRadii.sm),
-                            border: Border.all(
-                              color: AppColors.ink,
-                              width: AppBorders.standard,
-                            ),
-                          ),
-                          child: const Text(
-                            'PERTANYAAN',
-                            style: AppTextStyles.label,
+                        // Card Header & Question (+ Answer if revealed)
+                        Padding(
+                          padding: const EdgeInsets.all(AppSpacing.p20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Badge PERTANYAAN (Neo-Brutalist purple)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.p8,
+                                      vertical: AppSpacing.p4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.purple,
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadii.sm,
+                                      ),
+                                      border: Border.all(
+                                        color: AppColors.ink,
+                                        width: AppBorders.standard,
+                                      ),
+                                      boxShadow: AppDecorations.shadowSm,
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.help_outline,
+                                          size: 14,
+                                          color: AppColors.ink,
+                                        ),
+                                        SizedBox(width: AppSpacing.p4),
+                                        Text(
+                                          'PERTANYAAN',
+                                          style: AppTextStyles.label,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpacing.p12),
+                              const Divider(
+                                color: AppColors.lightBorder,
+                                thickness: AppBorders.thin,
+                                height: 1,
+                              ),
+                              const SizedBox(height: AppSpacing.p20),
+
+                              // Question Text (centered, bold, legible)
+                              Text(
+                                currentCard.question,
+                                style: AppTextStyles.h2,
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: AppSpacing.p16),
+
+                              // Yellow short accent line below question
+                              Container(
+                                width: 48,
+                                height: 3,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+
+                              // Answer Section (Answer State)
+                              if (isAnswerRevealed) ...[
+                                const SizedBox(height: AppSpacing.p24),
+                                const Divider(
+                                  color: AppColors.lightBorder,
+                                  thickness: AppBorders.thin,
+                                  height: 1,
+                                ),
+                                const SizedBox(height: AppSpacing.p20),
+
+                                // Badge JAWABAN (Neo-Brutalist teal)
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.p8,
+                                        vertical: AppSpacing.p4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.teal,
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadii.sm,
+                                        ),
+                                        border: Border.all(
+                                          color: AppColors.ink,
+                                          width: AppBorders.standard,
+                                        ),
+                                        boxShadow: AppDecorations.shadowSm,
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.check_circle_outline,
+                                            size: 14,
+                                            color: AppColors.ink,
+                                          ),
+                                          SizedBox(width: AppSpacing.p4),
+                                          Text(
+                                            'JAWABAN',
+                                            style: AppTextStyles.label,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: AppSpacing.p12),
+                                const Divider(
+                                  color: AppColors.lightBorder,
+                                  thickness: AppBorders.thin,
+                                  height: 1,
+                                ),
+                                const SizedBox(height: AppSpacing.p20),
+
+                                // Answer Text
+                                Text(
+                                  currentCard.answer,
+                                  style: AppTextStyles.bodyLargeBold.copyWith(
+                                    fontSize: 18,
+                                    height: 1.45,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.p16),
-                        Text(currentCard.question, style: AppTextStyles.h2),
 
-                        // Answer section (hidden until revealed)
-                        if (isAnswerRevealed) ...[
-                          const SizedBox(height: AppSpacing.p24),
-                          const Divider(
-                            color: AppColors.ink,
-                            thickness: AppBorders.standard,
-                          ),
-                          const SizedBox(height: AppSpacing.p16),
+                        // Question State Footer Hint (hidden when answer revealed)
+                        if (!isAnswerRevealed) ...[
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.p8,
-                              vertical: AppSpacing.p4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.teal,
-                              borderRadius: BorderRadius.circular(AppRadii.sm),
-                              border: Border.all(
-                                color: AppColors.ink,
-                                width: AppBorders.standard,
+                            decoration: const BoxDecoration(
+                              color: AppColors.canvas,
+                              border: Border(
+                                top: BorderSide(
+                                  color: AppColors.lightBorder,
+                                  width: AppBorders.thin,
+                                ),
                               ),
                             ),
-                            child: const Text(
-                              'JAWABAN',
-                              style: AppTextStyles.label,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.p16,
+                              vertical: AppSpacing.p12,
                             ),
-                          ),
-                          const SizedBox(height: AppSpacing.p16),
-                          Text(
-                            currentCard.answer,
-                            style: AppTextStyles.bodyLarge,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.lightbulb_outline,
+                                  size: 20,
+                                  color: AppColors.ink,
+                                ),
+                                const SizedBox(width: AppSpacing.p8),
+                                Expanded(
+                                  child: Text(
+                                    'Pikirkan jawabanmu di memori atau ucapkan dalam hati sebelum membuka kunci jawaban.',
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: AppColors.mutedText,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ],
@@ -237,6 +364,32 @@ class _StudySessionScreenState extends ConsumerState<StudySessionScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.p16),
+
+              // Focus Indicator (above action controls)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.verified_outlined,
+                    size: 14,
+                    color: AppColors.mutedText,
+                  ),
+                  const SizedBox(width: AppSpacing.p4),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'Fokus maksimal: Tanpa gangguan',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.mutedText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.p12),
 
               // Bottom Action Controls
               if (!isAnswerRevealed) ...[
