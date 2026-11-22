@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "RecallMe (Supabase Dev)",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=SUPABASE_URL=https://vxzqfngalpbahcxukqdl.supabase.co",
+        "--dart-define=SUPABASE_ANON_KEY=sb_publishable_qNnCOhjJWoR_fYYhT6-kQQ_wiNsvI22",
+        "--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_qNnCOhjJWoR_fYYhT6-kQQ_wiNsvI22"
+      ]
+    },
+    {
+      "name": "RecallMe (Mock UI / Offline)",
+      "request": "launch",
+      "type": "dart"
+    }
+  ]
+}
