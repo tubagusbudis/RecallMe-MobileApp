@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/application/auth_controller.dart';
 import '../data/flashcard_repository.dart';
 import '../domain/flashcard_model.dart';
 
@@ -9,12 +10,21 @@ class FlashcardController extends AsyncNotifier<List<FlashcardModel>> {
 
   @override
   Future<List<FlashcardModel>> build() async {
+    final userId = ref.watch(authControllerProvider.select((s) => s.user?.id));
+    if (userId == null) {
+      return const [];
+    }
     _repository = ref.watch(flashcardRepositoryProvider);
     return _repository.listAllCards();
   }
 
   /// Reloads all flashcards from repository.
   Future<void> refresh() async {
+    final userId = ref.read(authControllerProvider.select((s) => s.user?.id));
+    if (userId == null) {
+      state = const AsyncValue.data([]);
+      return;
+    }
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _repository.listAllCards());
   }

@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/application/auth_controller.dart';
+import '../features/auth/presentation/forgot_password_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/decks/presentation/deck_detail_screen.dart';
@@ -28,7 +29,9 @@ class RouterNotifier extends ChangeNotifier {
 
   RouterNotifier(this._ref) {
     _ref.listen<AuthState>(authControllerProvider, (previous, next) {
-      if (previous?.user?.id != next.user?.id) {
+      if (previous?.user?.id != next.user?.id ||
+          previous?.isAuthenticated != next.isAuthenticated ||
+          previous?.isPasswordRecovery != next.isPasswordRecovery) {
         notifyListeners();
       }
     });
@@ -37,20 +40,36 @@ class RouterNotifier extends ChangeNotifier {
   String? redirect(BuildContext context, GoRouterState state) {
     final authState = _ref.read(authControllerProvider);
     final isAuthenticated = authState.isAuthenticated;
-    final isWelcomeOrAuthRoute =
-        state.matchedLocation == '/welcome' ||
-        state.matchedLocation == '/login' ||
-        state.matchedLocation == '/register';
+    final location = state.matchedLocation;
+    final isPublicAuthRoute =
+        location == '/welcome' ||
+        location == '/login' ||
+        location == '/register' ||
+        location == '/forgot-password';
 
-    // If not authenticated, allow /welcome, /login, and /register.
-    // Redirect any attempt to view protected routes to /welcome.
-    if (!isAuthenticated) {
-      return isWelcomeOrAuthRoute ? null : '/welcome';
+    // 1. If currently on /forgot-password OR in password recovery mode:
+    // GoRouter MUST NOT throw user to /app/home.
+    if (location == '/forgot-password' || authState.isPasswordRecovery) {
+      if (location.startsWith('/app')) {
+        return '/login';
+      }
+      return null;
     }
 
-    // If authenticated and attempting to view /welcome, /login, or /register,
+    // 2. If not authenticated:
+    // If attempting to view protected /app routes, redirect directly to /login
+    if (!isAuthenticated) {
+      if (location.startsWith('/app')) {
+        return '/login';
+      }
+      return isPublicAuthRoute ? null : '/welcome';
+    }
+
+    // 3. If authenticated and attempting to view /welcome, /login, or /register,
     // redirect to Home (/app/home).
-    if (isWelcomeOrAuthRoute) {
+    if (location == '/welcome' ||
+        location == '/login' ||
+        location == '/register') {
       return '/app/home';
     }
 
@@ -82,6 +101,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
 
       // Card edit outside bottom nav

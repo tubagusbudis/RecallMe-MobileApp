@@ -16,18 +16,32 @@ abstract class AuthRepository {
   /// Currently authenticated user, or null if unauthenticated.
   UserModel? get currentUser;
 
-  /// Registers a new user with username and password, mapped to `<username>@recallme.internal`.
+  /// Registers a new user with real email, password, and username.
+  /// Metadata `username` and `display_name` are sent to trigger DB `handle_new_user()`.
   Future<UserModel> signUp({
-    required String username,
+    required String email,
     required String password,
+    required String username,
     String? displayName,
   });
 
-  /// Signs in using username and password, mapped to `<username>@recallme.internal`.
+  /// Signs in using real email and password.
   Future<UserModel> signInWithPassword({
-    required String username,
+    required String email,
     required String password,
   });
+
+  /// Sends an 8-digit OTP code to the user's email for password reset.
+  Future<void> sendPasswordResetOtp(String email);
+
+  /// Verifies the 8-digit OTP code using recovery type.
+  Future<void> verifyPasswordResetOtp({
+    required String email,
+    required String token,
+  });
+
+  /// Updates the user's password once verified/authenticated.
+  Future<void> updatePassword(String newPassword);
 
   /// Signs out the current user session.
   Future<void> signOut();
@@ -44,6 +58,14 @@ class SupabaseAuthRepository implements AuthRepository {
 
   SupabaseAuthRepository(this._client) {
     _sub = _client.auth.onAuthStateChange.listen((data) async {
+      if (data.event == AuthChangeEvent.signedOut ||
+          data.session == null ||
+          data.session?.user == null ||
+          _client.auth.currentSession == null ||
+          _client.auth.currentUser == null) {
+        _authStateController.add(null);
+        return;
+      }
       final user = data.session?.user;
       if (user == null) {
         _authStateController.add(null);
@@ -64,24 +86,38 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   UserModel? get currentUser {
+    if (_client.auth.currentSession == null ||
+        _client.auth.currentUser == null) {
+      return null;
+    }
     final user = _client.auth.currentUser;
     if (user == null) return null;
     return _userModelFromSupabase(user);
   }
 
-  Future<UserModel> _buildUserModel(User user) async {
+  Future<Map<String, dynamic>?> _fetchProfile(String userId) async {
+    if (_client.auth.currentSession == null ||
+        _client.auth.currentUser == null) {
+      return null;
+    }
     try {
       final profile = await _client
           .from('profiles')
           .select('id, username, display_name, created_at')
-          .eq('id', user.id)
+          .eq('id', userId)
           .maybeSingle();
 
-      if (profile != null) {
-        return UserModel.fromProfileMap(profile);
-      }
+      return profile;
     } catch (e) {
       debugPrint('[SupabaseAuthRepository] Error fetching profile: $e');
+      return null;
+    }
+  }
+
+  Future<UserModel> _buildUserModel(User user) async {
+    final profile = await _fetchProfile(user.id);
+    if (profile != null) {
+      return UserModel.fromProfileMap(profile, email: user.email);
     }
     return _userModelFromSupabase(user);
   }
@@ -90,7 +126,9 @@ class SupabaseAuthRepository implements AuthRepository {
     final meta = user.userMetadata ?? {};
     final username =
         (meta['username'] as String?) ??
-        AuthValidators.extractUsernameFromEmail(user.email ?? 'user');
+        (user.email != null
+            ? AuthValidators.extractUsernameFromEmail(user.email!)
+            : 'user');
     final displayName = (meta['display_name'] as String?)?.isNotEmpty == true
         ? meta['display_name'] as String
         : username;
@@ -99,27 +137,26 @@ class SupabaseAuthRepository implements AuthRepository {
       id: user.id,
       username: username,
       displayName: displayName,
+      email: user.email,
       createdAt: DateTime.tryParse(user.createdAt) ?? DateTime.now(),
     );
   }
 
   @override
   Future<UserModel> signUp({
-    required String username,
+    required String email,
     required String password,
+    required String username,
     String? displayName,
   }) async {
+    final cleanEmail = email.trim().toLowerCase();
     final normalizedUsername = username.trim().toLowerCase();
-    final internalEmail = AuthValidators.toInternalAuthEmail(
-      normalizedUsername,
-    );
-
     final cleanDisplayName = displayName?.trim().isNotEmpty == true
         ? displayName!.trim()
         : normalizedUsername;
 
     final response = await _client.auth.signUp(
-      email: internalEmail,
+      email: cleanEmail,
       password: password,
       data: {'username': normalizedUsername, 'display_name': cleanDisplayName},
     );
@@ -134,7 +171,7 @@ class SupabaseAuthRepository implements AuthRepository {
     if (response.session == null) {
       try {
         final signinRes = await _client.auth.signInWithPassword(
-          email: internalEmail,
+          email: cleanEmail,
           password: password,
         );
         if (signinRes.user != null) {
@@ -150,16 +187,13 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<UserModel> signInWithPassword({
-    required String username,
+    required String email,
     required String password,
   }) async {
-    final normalizedUsername = username.trim().toLowerCase();
-    final internalEmail = AuthValidators.toInternalAuthEmail(
-      normalizedUsername,
-    );
+    final cleanEmail = email.trim().toLowerCase();
 
     final response = await _client.auth.signInWithPassword(
-      email: internalEmail,
+      email: cleanEmail,
       password: password,
     );
 
@@ -169,6 +203,31 @@ class SupabaseAuthRepository implements AuthRepository {
     }
 
     return await _buildUserModel(user);
+  }
+
+  @override
+  Future<void> sendPasswordResetOtp(String email) async {
+    final cleanEmail = email.trim().toLowerCase();
+    await _client.auth.resetPasswordForEmail(cleanEmail);
+  }
+
+  @override
+  Future<void> verifyPasswordResetOtp({
+    required String email,
+    required String token,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    final cleanToken = token.trim();
+    await _client.auth.verifyOTP(
+      email: cleanEmail,
+      token: cleanToken,
+      type: OtpType.recovery,
+    );
+  }
+
+  @override
+  Future<void> updatePassword(String newPassword) async {
+    await _client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
   @override
@@ -186,18 +245,27 @@ class SupabaseAuthRepository implements AuthRepository {
       if (msg.contains('already registered') ||
           msg.contains('user already exists') ||
           msg.contains('unique constraint')) {
-        return 'Username sudah terdaftar. Silakan pilih username lain atau login.';
+        return 'Email atau username sudah terdaftar. Silakan pilih yang lain atau login.';
       }
       if (msg.contains('invalid login credentials') ||
           msg.contains('invalid grant')) {
-        return 'Username atau password salah.';
+        return 'Email atau password salah.';
       }
       if (msg.contains('password') &&
           (msg.contains('short') || msg.contains('least'))) {
         return 'Password minimal 8 karakter.';
       }
-      if (msg.contains('rate limit') || msg.contains('too many requests')) {
-        return 'Terlalu banyak percobaan. Silakan coba lagi beberapa saat.';
+      if (msg.contains('rate limit') ||
+          msg.contains('too many requests') ||
+          msg.contains('over_email_send_rate_limit')) {
+        return 'Terlalu banyak permintaan (rate limit). Silakan tunggu beberapa saat sebelum mencoba lagi.';
+      }
+      if (msg.contains('token has expired') ||
+          msg.contains('invalid token') ||
+          msg.contains('token is invalid') ||
+          msg.contains('otp expired') ||
+          msg.contains('otp invalid')) {
+        return 'Kode OTP tidak valid atau sudah kedaluwarsa.';
       }
       if (msg.contains('network') ||
           msg.contains('connection') ||
@@ -240,6 +308,7 @@ class MockAuthRepository implements AuthRepository {
                 id: 'user-1',
                 username: 'raka_belajar',
                 displayName: 'Raka Pratama',
+                email: 'raka@example.com',
                 createdAt: DateTime.now().subtract(const Duration(days: 30)),
               ));
   }
@@ -252,11 +321,13 @@ class MockAuthRepository implements AuthRepository {
 
   @override
   Future<UserModel> signUp({
-    required String username,
+    required String email,
     required String password,
+    required String username,
     String? displayName,
   }) async {
     await Future.delayed(const Duration(milliseconds: 200));
+    final cleanEmail = email.trim().toLowerCase();
     final normalized = username.trim().toLowerCase();
     _user = UserModel(
       id: 'mock-${DateTime.now().millisecondsSinceEpoch}',
@@ -264,6 +335,7 @@ class MockAuthRepository implements AuthRepository {
       displayName: displayName?.trim().isNotEmpty == true
           ? displayName!.trim()
           : normalized,
+      email: cleanEmail,
       createdAt: DateTime.now(),
     );
     _controller.add(_user);
@@ -272,19 +344,55 @@ class MockAuthRepository implements AuthRepository {
 
   @override
   Future<UserModel> signInWithPassword({
-    required String username,
+    required String email,
     required String password,
   }) async {
     await Future.delayed(const Duration(milliseconds: 200));
-    final normalized = username.trim().toLowerCase();
+    final cleanEmail = email.trim().toLowerCase();
+    final username = cleanEmail.split('@').first;
     _user = UserModel(
       id: 'mock-${DateTime.now().millisecondsSinceEpoch}',
-      username: normalized,
-      displayName: normalized,
+      username: username,
+      displayName: username,
+      email: cleanEmail,
       createdAt: DateTime.now(),
     );
     _controller.add(_user);
     return _user!;
+  }
+
+  @override
+  Future<void> sendPasswordResetOtp(String email) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    // Simulated successful OTP send
+  }
+
+  @override
+  Future<void> verifyPasswordResetOtp({
+    required String email,
+    required String token,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    final cleanToken = token.trim();
+    if (cleanToken != '12345678' && cleanToken.length != 8) {
+      throw const AuthException('Kode OTP tidak valid atau sudah kedaluwarsa.');
+    }
+    // Supabase sets an active recovery session
+    final cleanEmail = email.trim().toLowerCase();
+    _user = UserModel(
+      id: 'mock-recovery-user',
+      username: cleanEmail.split('@').first,
+      displayName: 'Recovery User',
+      email: cleanEmail,
+      createdAt: DateTime.now(),
+    );
+    _controller.add(_user);
+  }
+
+  @override
+  Future<void> updatePassword(String newPassword) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    // Simulated successful password update
   }
 
   @override
@@ -295,7 +403,10 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  String mapError(Object error) => error.toString();
+  String mapError(Object error) {
+    if (error is AuthException) return error.message;
+    return error.toString();
+  }
 }
 
 /// Provider for [AuthRepository]. Automatically uses [SupabaseAuthRepository]

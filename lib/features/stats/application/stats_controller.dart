@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/application/auth_controller.dart';
 import '../../study/data/review_repository.dart';
 
 class ReviewLogModel {
@@ -45,6 +46,14 @@ class StatsController extends AsyncNotifier<StatsState> {
 
   @override
   Future<StatsState> build() async {
+    final userId = ref.watch(authControllerProvider.select((s) => s.user?.id));
+    if (userId == null) {
+      return const StatsState(
+        totalReviews: 0,
+        ratingDistribution: {1: 0, 3: 0, 4: 0, 5: 0},
+        recentLogs: [],
+      );
+    }
     _repository = ref.watch(reviewRepositoryProvider);
     final summary = await _repository.getStatsSummary();
 
@@ -65,6 +74,17 @@ class StatsController extends AsyncNotifier<StatsState> {
   }
 
   Future<void> refresh() async {
+    final userId = ref.read(authControllerProvider.select((s) => s.user?.id));
+    if (userId == null) {
+      state = const AsyncValue.data(
+        StatsState(
+          totalReviews: 0,
+          ratingDistribution: {1: 0, 3: 0, 4: 0, 5: 0},
+          recentLogs: [],
+        ),
+      );
+      return;
+    }
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final summary = await _repository.getStatsSummary();

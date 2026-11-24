@@ -19,7 +19,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
@@ -27,14 +27,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void initState() {
     super.initState();
     if (!SupabaseConfig.isConfigured) {
-      _usernameController.text = 'raka_belajar';
+      _emailController.text = 'raka@example.com';
       _passwordController.text = 'RecallMe123!';
     }
   }
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -42,7 +42,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _onLogin() async {
     final success = await ref
         .read(authControllerProvider.notifier)
-        .login(_usernameController.text, _passwordController.text);
+        .login(_emailController.text, _passwordController.text);
     if (success && mounted) {
       context.go('/app/home');
     }
@@ -94,7 +94,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const Text('Selamat Datang!', style: AppTextStyles.h2),
                       const SizedBox(height: AppSpacing.p4),
                       const Text(
-                        'Masuk menggunakan Username & Password',
+                        'Masuk menggunakan Email & Password',
                         style: AppTextStyles.bodyMedium,
                       ),
                       const SizedBox(height: AppSpacing.p20),
@@ -134,22 +134,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const SizedBox(height: AppSpacing.p16),
                       ],
 
-                      // Username
+                      // Email Field
                       AppTextField(
-                        label: 'USERNAME',
-                        hint: 'contoh: raka_belajar',
-                        controller: _usernameController,
+                        label: 'EMAIL',
+                        hint: 'contoh: raka@example.com',
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
                         onChanged: (_) => ref
                             .read(authControllerProvider.notifier)
                             .clearError(),
                         prefixIcon: const Icon(
-                          Icons.alternate_email,
+                          Icons.email_outlined,
                           color: AppColors.ink,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.p16),
 
-                      // Password
+                      // Password Field
                       AppTextField(
                         label: 'PASSWORD',
                         hint: '••••••••',
@@ -174,7 +175,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.p24),
+                      const SizedBox(height: AppSpacing.p8),
+
+                      // Lupa Password link
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () => context.go('/forgot-password'),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Text(
+                              'Lupa Password?',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.ink,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.p20),
 
                       // Submit CTA
                       AppButton(

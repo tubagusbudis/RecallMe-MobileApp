@@ -142,6 +142,13 @@ class SupabaseReviewRepository implements ReviewRepository {
 
   @override
   Future<ReviewStatsSummary> getStatsSummary() async {
+    if (_client.auth.currentSession == null) {
+      return const ReviewStatsSummary(
+        totalReviews: 0,
+        ratingDistribution: {1: 0, 3: 0, 4: 0, 5: 0},
+        recentLogs: [],
+      );
+    }
     // 1. Get recent review logs with deck titles via join
     final recentRows = await _client
         .from('review_logs')

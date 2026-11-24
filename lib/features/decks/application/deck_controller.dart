@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/application/auth_controller.dart';
 import '../data/deck_repository.dart';
 import '../domain/deck_model.dart';
 
@@ -9,12 +10,21 @@ class DeckController extends AsyncNotifier<List<DeckModel>> {
 
   @override
   Future<List<DeckModel>> build() async {
+    final userId = ref.watch(authControllerProvider.select((s) => s.user?.id));
+    if (userId == null) {
+      return const [];
+    }
     _repository = ref.watch(deckRepositoryProvider);
     return _repository.listDecks();
   }
 
   /// Reloads the deck list from the repository.
   Future<void> refresh() async {
+    final userId = ref.read(authControllerProvider.select((s) => s.user?.id));
+    if (userId == null) {
+      state = const AsyncValue.data([]);
+      return;
+    }
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _repository.listDecks());
   }

@@ -67,6 +67,9 @@ class SupabaseFlashcardRepository implements FlashcardRepository {
 
   @override
   Future<List<FlashcardModel>> listAllCards() async {
+    if (_client.auth.currentSession == null) {
+      return const [];
+    }
     final rows = await _client
         .from('flashcards')
         .select(_selectColumns)
@@ -79,6 +82,9 @@ class SupabaseFlashcardRepository implements FlashcardRepository {
 
   @override
   Future<List<FlashcardModel>> getCardsForDeck(String deckId) async {
+    if (_client.auth.currentSession == null) {
+      return const [];
+    }
     final rows = await _client
         .from('flashcards')
         .select(_selectColumns)
@@ -92,6 +98,9 @@ class SupabaseFlashcardRepository implements FlashcardRepository {
 
   @override
   Future<FlashcardModel?> getCardById(String id) async {
+    if (_client.auth.currentSession == null) {
+      return null;
+    }
     final row = await _client
         .from('flashcards')
         .select(_selectColumns)
@@ -107,6 +116,9 @@ class SupabaseFlashcardRepository implements FlashcardRepository {
     String deckId, {
     int limit = 20,
   }) async {
+    if (_client.auth.currentSession == null) {
+      return const [];
+    }
     final nowUtc = DateTime.now().toUtc().toIso8601String();
     final rows = await _client
         .from('flashcards')
@@ -127,6 +139,9 @@ class SupabaseFlashcardRepository implements FlashcardRepository {
     required String question,
     required String answer,
   }) async {
+    if (_client.auth.currentSession == null) {
+      throw const AuthException('Sesi telah berakhir. Silakan login kembali.');
+    }
     final row = await _client
         .from('flashcards')
         .insert({
@@ -146,6 +161,9 @@ class SupabaseFlashcardRepository implements FlashcardRepository {
     required String question,
     required String answer,
   }) async {
+    if (_client.auth.currentSession == null) {
+      throw const AuthException('Sesi telah berakhir. Silakan login kembali.');
+    }
     final row = await _client
         .from('flashcards')
         .update({'question': question.trim(), 'answer': answer.trim()})
@@ -159,11 +177,17 @@ class SupabaseFlashcardRepository implements FlashcardRepository {
 
   @override
   Future<void> deleteCard(String id) async {
+    if (_client.auth.currentSession == null) {
+      return;
+    }
     await _client.from('flashcards').delete().eq('id', id);
   }
 
   @override
   Future<int> getCardCountForDeck(String deckId) async {
+    if (_client.auth.currentSession == null) {
+      return 0;
+    }
     final response = await _client
         .from('flashcards')
         .select('id')
@@ -174,6 +198,9 @@ class SupabaseFlashcardRepository implements FlashcardRepository {
 
   @override
   Future<int> getDueCountForDeck(String deckId) async {
+    if (_client.auth.currentSession == null) {
+      return 0;
+    }
     final nowUtc = DateTime.now().toUtc().toIso8601String();
     final response = await _client
         .from('flashcards')
@@ -186,6 +213,9 @@ class SupabaseFlashcardRepository implements FlashcardRepository {
 
   @override
   Future<int> getTotalDueCount() async {
+    if (_client.auth.currentSession == null) {
+      return 0;
+    }
     final nowUtc = DateTime.now().toUtc().toIso8601String();
     final response = await _client
         .from('flashcards')

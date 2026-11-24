@@ -19,6 +19,7 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _displayNameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -26,6 +27,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   void dispose() {
     _usernameController.dispose();
+    _emailController.dispose();
     _displayNameController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -36,6 +38,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         .read(authControllerProvider.notifier)
         .register(
           _usernameController.text,
+          _emailController.text,
           _passwordController.text,
           displayName: _displayNameController.text,
         );
@@ -139,6 +142,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             .clearError(),
                         prefixIcon: const Icon(
                           Icons.alternate_email,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.p16),
+
+                      // Email
+                      AppTextField(
+                        label: 'EMAIL',
+                        hint: 'contoh: siswa@example.com',
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        onChanged: (_) => ref
+                            .read(authControllerProvider.notifier)
+                            .clearError(),
+                        prefixIcon: const Icon(
+                          Icons.email_outlined,
                           color: AppColors.ink,
                         ),
                       ),
@@ -289,11 +308,13 @@ class _CriteriaItem extends StatelessWidget {
             color: isMet ? AppColors.teal : AppColors.mutedText,
           ),
           const SizedBox(width: AppSpacing.p8),
-          Text(
-            label,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: isMet ? AppColors.ink : AppColors.mutedText,
-              fontWeight: isMet ? FontWeight.w600 : FontWeight.w400,
+          Expanded(
+            child: Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isMet ? AppColors.ink : AppColors.mutedText,
+                fontWeight: isMet ? FontWeight.w600 : FontWeight.w400,
+              ),
             ),
           ),
         ],

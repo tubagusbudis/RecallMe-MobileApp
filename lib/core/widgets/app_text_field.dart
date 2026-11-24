@@ -18,6 +18,7 @@ class AppTextField extends StatelessWidget {
   final TextInputType keyboardType;
   final int maxLines;
   final int minLines;
+  final int? maxLength;
   final ValueChanged<String>? onChanged;
   final bool enabled;
 
@@ -34,6 +35,7 @@ class AppTextField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.maxLines = 1,
     this.minLines = 1,
+    this.maxLength,
     this.onChanged,
     this.enabled = true,
   });
@@ -68,6 +70,15 @@ class AppTextField extends StatelessWidget {
             keyboardType: keyboardType,
             maxLines: obscureText ? 1 : maxLines,
             minLines: obscureText ? 1 : minLines,
+            maxLength: maxLength,
+            buildCounter: maxLength != null
+                ? (
+                    context, {
+                    required currentLength,
+                    required isFocused,
+                    maxLength,
+                  }) => null
+                : null,
             enabled: enabled,
             onChanged: onChanged,
             style: AppTextStyles.bodyLarge,

@@ -3,6 +3,87 @@ import 'package:recallme/features/auth/domain/auth_validators.dart';
 
 void main() {
   group('AuthValidators', () {
+    group('validateEmail', () {
+      test('rejects empty or whitespace email', () {
+        expect(AuthValidators.validateEmail(''), 'Email tidak boleh kosong');
+        expect(AuthValidators.validateEmail('   '), 'Email tidak boleh kosong');
+      });
+
+      test('rejects invalid email formats', () {
+        expect(
+          AuthValidators.validateEmail('plainaddress'),
+          'Format email tidak valid',
+        );
+        expect(
+          AuthValidators.validateEmail(r'#@%^%#$@#$@#.com'),
+          'Format email tidak valid',
+        );
+        expect(
+          AuthValidators.validateEmail('@example.com'),
+          'Format email tidak valid',
+        );
+        expect(
+          AuthValidators.validateEmail('user@'),
+          'Format email tidak valid',
+        );
+        expect(
+          AuthValidators.validateEmail('user@example'),
+          'Format email tidak valid',
+        );
+        expect(
+          AuthValidators.validateEmail('user with spaces@example.com'),
+          'Format email tidak valid',
+        );
+      });
+
+      test('accepts valid email formats', () {
+        expect(AuthValidators.validateEmail('user@example.com'), isNull);
+        expect(
+          AuthValidators.validateEmail('raka.belajar@gmail.co.id'),
+          isNull,
+        );
+        expect(
+          AuthValidators.validateEmail('siswa_123+tag@sekolah.sch.id'),
+          isNull,
+        );
+      });
+    });
+
+    group('validateOtp', () {
+      test('rejects empty or whitespace OTP', () {
+        expect(AuthValidators.validateOtp(''), 'Kode OTP tidak boleh kosong');
+        expect(
+          AuthValidators.validateOtp('   '),
+          'Kode OTP tidak boleh kosong',
+        );
+      });
+
+      test('rejects OTP with non-digits or not 8 digits', () {
+        expect(
+          AuthValidators.validateOtp('1234567'),
+          'Kode OTP harus berupa 8 digit angka',
+        );
+        expect(
+          AuthValidators.validateOtp('123456789'),
+          'Kode OTP harus berupa 8 digit angka',
+        );
+        expect(
+          AuthValidators.validateOtp('1234567a'),
+          'Kode OTP harus berupa 8 digit angka',
+        );
+        expect(
+          AuthValidators.validateOtp('abcdefgh'),
+          'Kode OTP harus berupa 8 digit angka',
+        );
+      });
+
+      test('accepts valid 8-digit OTP', () {
+        expect(AuthValidators.validateOtp('12345678'), isNull);
+        expect(AuthValidators.validateOtp('00000000'), isNull);
+        expect(AuthValidators.validateOtp('98765432'), isNull);
+      });
+    });
+
     group('toInternalAuthEmail', () {
       test('maps username to lowercase internal email', () {
         expect(
@@ -17,12 +98,16 @@ void main() {
     });
 
     group('extractUsernameFromEmail', () {
-      test('extracts clean username from internal email', () {
+      test('extracts clean username from internal or normal email', () {
         expect(
           AuthValidators.extractUsernameFromEmail(
             'raka_belajar@recallme.internal',
           ),
           'raka_belajar',
+        );
+        expect(
+          AuthValidators.extractUsernameFromEmail('budi.santoso@gmail.com'),
+          'budi.santoso',
         );
       });
     });

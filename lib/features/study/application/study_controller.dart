@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/uuid_generator.dart';
+import '../../auth/application/auth_controller.dart';
 import '../../decks/application/deck_controller.dart';
 import '../../flashcards/application/flashcard_controller.dart';
 import '../../flashcards/data/flashcard_repository.dart';
@@ -18,6 +19,10 @@ class StudyController extends Notifier<StudySessionData?> {
 
   @override
   StudySessionData? build() {
+    final userId = ref.watch(authControllerProvider.select((s) => s.user?.id));
+    if (userId == null) {
+      return null;
+    }
     _flashcardRepo = ref.watch(flashcardRepositoryProvider);
     _reviewRepo = ref.watch(reviewRepositoryProvider);
     return null;
@@ -26,6 +31,10 @@ class StudyController extends Notifier<StudySessionData?> {
   /// Initializes a study session for 1 deck with a hard limit of 20 cards.
   /// Follows Single-Queue query rule: `next_review_at <= now() ORDER BY next_review_at ASC LIMIT 20`.
   Future<void> startSession(String deckId) async {
+    final userId = ref.read(authControllerProvider.select((s) => s.user?.id));
+    if (userId == null) {
+      return;
+    }
     state = StudySessionData(
       deckId: deckId,
       deckTitle: 'Memuat...',

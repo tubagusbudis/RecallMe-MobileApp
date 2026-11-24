@@ -71,10 +71,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Selamat Datang!'), findsOneWidget);
-        expect(
-          find.text('Masuk menggunakan Username & Password'),
-          findsOneWidget,
-        );
+        expect(find.text('Masuk menggunakan Email & Password'), findsOneWidget);
       },
     );
 

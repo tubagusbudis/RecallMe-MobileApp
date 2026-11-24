@@ -38,6 +38,9 @@ class SupabaseDeckRepository implements DeckRepository {
 
   @override
   Future<List<DeckModel>> listDecks() async {
+    if (_client.auth.currentSession == null) {
+      return const [];
+    }
     final rows = await _client
         .from('decks')
         .select('id, user_id, title, description, created_at, updated_at')
@@ -50,6 +53,9 @@ class SupabaseDeckRepository implements DeckRepository {
 
   @override
   Future<DeckModel?> getDeckById(String id) async {
+    if (_client.auth.currentSession == null) {
+      return null;
+    }
     final row = await _client
         .from('decks')
         .select('id, user_id, title, description, created_at, updated_at')
@@ -65,7 +71,11 @@ class SupabaseDeckRepository implements DeckRepository {
     required String title,
     String description = '',
   }) async {
-    final userId = _client.auth.currentUser!.id;
+    final session = _client.auth.currentSession;
+    if (session == null) {
+      throw const AuthException('Sesi telah berakhir. Silakan login kembali.');
+    }
+    final userId = session.user.id;
     final row = await _client
         .from('decks')
         .insert({
@@ -85,6 +95,9 @@ class SupabaseDeckRepository implements DeckRepository {
     required String title,
     String description = '',
   }) async {
+    if (_client.auth.currentSession == null) {
+      throw const AuthException('Sesi telah berakhir. Silakan login kembali.');
+    }
     final row = await _client
         .from('decks')
         .update({
@@ -101,6 +114,9 @@ class SupabaseDeckRepository implements DeckRepository {
 
   @override
   Future<void> deleteDeck(String id) async {
+    if (_client.auth.currentSession == null) {
+      return;
+    }
     await _client.from('decks').delete().eq('id', id);
   }
 

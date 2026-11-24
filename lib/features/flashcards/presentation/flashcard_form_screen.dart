@@ -185,7 +185,7 @@ class _FlashcardFormScreenState extends ConsumerState<FlashcardFormScreen> {
                     SizedBox(width: AppSpacing.p8),
                     Expanded(
                       child: Text(
-                        'Flashcard RecallMe MVP berbasis teks. Dukungan gambar ditunda pasca-MVP.',
+                        'Flashcard saat ini berbasis teks. Fitur tambah gambar akan tersedia di versi selanjutnya.',
                         style: AppTextStyles.bodySmall,
                       ),
                     ),
